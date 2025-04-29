@@ -73,4 +73,11 @@ public class CellRange {
         }
         return new CellRange(topLeft, Math.abs(height), Math.abs(width));
     }
+
+    public String toString() {
+        if (topLeft == null) {
+            return "null";
+        }
+        return topLeft.toExcelString() + ":" + bottomRight.toExcelString();
+    }
 }
