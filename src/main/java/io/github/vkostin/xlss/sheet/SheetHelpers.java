@@ -14,8 +14,8 @@ import java.util.function.Function;
 import static io.github.vkostin.xlss.styles.StylesHelper.setBgColor;
 import static io.github.vkostin.xlss.styles.StylesHelper.setNoBorder;
 
-public class SheetHelpers {
-    public void setDefaultSheetStyle(XSSFWorkbook workbook, Sheet sheet, Function<DefaultStyleRendererParams, XSSFCellStyle> createDefaultStyle) {
+public final class SheetHelpers {
+    public static void setDefaultSheetStyle(XSSFWorkbook workbook, Sheet sheet, Function<DefaultStyleRendererParams, XSSFCellStyle> createDefaultStyle) {
         if (createDefaultStyle != null) {
             XSSFCellStyle defaultStyle = createDefaultStyle.apply(new DefaultStyleRendererParams(workbook, sheet));
             if (defaultStyle != null) {
@@ -33,7 +33,7 @@ public class SheetHelpers {
 
     }
 
-    public static Function<DefaultStyleRendererParams, XSSFCellStyle> getWhiteBgStyle() {
+    public static Function<DefaultStyleRendererParams, XSSFCellStyle> getWhiteBgStyleGenerator() {
         return (DefaultStyleRendererParams params) -> {
             XSSFCellStyle defaultStyle = params.workbook.createCellStyle();
             DefaultIndexedColorMap indexedColorMap = new DefaultIndexedColorMap();
