@@ -1,13 +1,11 @@
 package io.github.vkostin.xlss.parser;
 
 import lombok.SneakyThrows;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
@@ -18,6 +16,7 @@ public class ParserHelpers {
         XSSFSheet sheet = workbook.getSheetAt(sheetIdx);
         return parseToStrings(sheet, headerRowY, null);
     }
+
     @SneakyThrows
     public static List<Map<String, String>> parseToStrings(InputStream stream, int sheetIdx, int headerRowY) {
         XSSFWorkbook workbook = new XSSFWorkbook(stream, true);
@@ -29,19 +28,20 @@ public class ParserHelpers {
     public static List<Map<String, String>> parseToStrings(File file, int sheetIdx, int headerRowY, List<String> headersTitles) {
         XSSFWorkbook workbook = new XSSFWorkbook(file);
         XSSFSheet sheet = workbook.getSheetAt(sheetIdx);
-        return parseToStrings(sheet, headerRowY, Optional.ofNullable(headersTitles));
+        return parseToStrings(sheet, headerRowY, headersTitles);
     }
+
     @SneakyThrows
-    public static List<Map<String, String>> parseToStrings(InputStream stream,  int sheetIdx, int headerRowY, List<String> headersTitles) {
+    public static List<Map<String, String>> parseToStrings(InputStream stream, int sheetIdx, int headerRowY, List<String> headersTitles) {
         XSSFWorkbook workbook = new XSSFWorkbook(stream, true);
         XSSFSheet sheet = workbook.getSheetAt(sheetIdx);
-        return parseToStrings(sheet, headerRowY, Optional.ofNullable(headersTitles));
+        return parseToStrings(sheet, headerRowY, headersTitles);
     }
 
-    public static List<Map<String, String>> parseToStrings(Sheet sheet, int headerRowY, Optional<List<String>> headersTitles) {
+    public static List<Map<String, String>> parseToStrings(Sheet sheet, int headerRowY, List<String> headersTitlesOrNull) {
         List<Map<String, String>> rows = new ArrayList<>();
 
-        Map<String, Integer> headersIdxMap = getHeaderToColIdxMap(headersTitles, sheet, headerRowY);
+        Map<String, Integer> headersIdxMap = getHeaderToColIdxMap(headersTitlesOrNull, sheet, headerRowY);
 
         for (int i = headerRowY + 1; i <= sheet.getLastRowNum(); i++) { // Start from the second row
             Row row = sheet.getRow(i);
@@ -60,7 +60,7 @@ public class ParserHelpers {
             } catch (Exception e) {
                 System.out.println(e.getMessage());
             }
-            if (rowData.keySet().size() == headersIdxMap.size()) {
+            if (rowData.size() == headersIdxMap.size()) {
                 rows.add(rowData);
             }
         }
@@ -68,9 +68,9 @@ public class ParserHelpers {
         return rows;
     }
 
-    private static Map<String, Integer> getHeaderToColIdxMap(Optional<List<String>> headersTitles, Sheet sheet, int headerRowY) {
-        if (headersTitles.isPresent()) {
-            return getHeaderToColIdxMap(headersTitles, sheet, headerRowY);
+    private static Map<String, Integer> getHeaderToColIdxMap(List<String> headersTitlesOrNull, Sheet sheet, int headerRowY) {
+        if (headersTitlesOrNull != null) {
+            return getHeaderToColIdxMapWithRequiredHeaders(headersTitlesOrNull, sheet, headerRowY);
         }
         return getHeaderToColIdxMap(sheet, headerRowY);
     }
@@ -88,7 +88,7 @@ public class ParserHelpers {
         return headersIdxMap;
     }
 
-    private static Map<String, Integer> getHeaderToColIdxMap(List<String> headersTitles, Sheet sheet, int headerRowY) {
+    private static Map<String, Integer> getHeaderToColIdxMapWithRequiredHeaders(List<String> headersTitles, Sheet sheet, int headerRowY) {
         Row headerRow = sheet.getRow(headerRowY);
         if (headerRow == null) {
             throw new IllegalArgumentException("Sheet is empty or does not contain a header row.");
