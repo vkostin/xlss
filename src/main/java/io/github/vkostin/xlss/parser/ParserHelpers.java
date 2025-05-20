@@ -8,6 +8,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 
 public class ParserHelpers {
@@ -17,10 +18,22 @@ public class ParserHelpers {
         XSSFSheet sheet = workbook.getSheetAt(sheetIdx);
         return parseToStrings(sheet, headerRowY, null);
     }
+    @SneakyThrows
+    public static List<Map<String, String>> parseToStrings(InputStream stream, int sheetIdx, int headerRowY) {
+        XSSFWorkbook workbook = new XSSFWorkbook(stream, true);
+        XSSFSheet sheet = workbook.getSheetAt(sheetIdx);
+        return parseToStrings(sheet, headerRowY, null);
+    }
 
     @SneakyThrows
     public static List<Map<String, String>> parseToStrings(File file, int sheetIdx, int headerRowY, List<String> headersTitles) {
         XSSFWorkbook workbook = new XSSFWorkbook(file);
+        XSSFSheet sheet = workbook.getSheetAt(sheetIdx);
+        return parseToStrings(sheet, headerRowY, Optional.ofNullable(headersTitles));
+    }
+    @SneakyThrows
+    public static List<Map<String, String>> parseToStrings(InputStream stream,  int sheetIdx, int headerRowY, List<String> headersTitles) {
+        XSSFWorkbook workbook = new XSSFWorkbook(stream, true);
         XSSFSheet sheet = workbook.getSheetAt(sheetIdx);
         return parseToStrings(sheet, headerRowY, Optional.ofNullable(headersTitles));
     }
