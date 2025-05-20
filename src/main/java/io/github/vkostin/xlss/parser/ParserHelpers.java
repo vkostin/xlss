@@ -1,42 +1,40 @@
 package io.github.vkostin.xlss.parser;
 
+import lombok.SneakyThrows;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 public class ParserHelpers {
-    public static List<Map<String, String>> parseToStrings(Sheet sheet, int headerRowY, List<String> headersTitles) {
+    @SneakyThrows
+    public static List<Map<String, String>> parseToStrings(File file, int sheetIdx, int headerRowY) {
+        XSSFWorkbook workbook = new XSSFWorkbook(file);
+        XSSFSheet sheet = workbook.getSheetAt(sheetIdx);
+        return parseToStrings(sheet, headerRowY, null);
+    }
+
+    @SneakyThrows
+    public static List<Map<String, String>> parseToStrings(File file, int sheetIdx, int headerRowY, List<String> headersTitles) {
+        XSSFWorkbook workbook = new XSSFWorkbook(file);
+        XSSFSheet sheet = workbook.getSheetAt(sheetIdx);
+        return parseToStrings(sheet, headerRowY, Optional.ofNullable(headersTitles));
+    }
+
+    public static List<Map<String, String>> parseToStrings(Sheet sheet, int headerRowY, Optional<List<String>> headersTitles) {
         List<Map<String, String>> rows = new ArrayList<>();
-        Row headerRow = sheet.getRow(headerRowY);
 
-        if (headerRow == null) {
-            throw new IllegalArgumentException("Sheet is empty or does not contain a header row.");
-        }
-
-        //      List<String> headers = new ArrayList<>();
-        Map<String, Integer> headersIdxMap = new HashMap<>();
-        Set<String> headerToAdd = new HashSet<>(headersTitles);
-        for (Cell cell : headerRow) {
-            String cellValue = getCellValue(cell);
-            if (headerToAdd.contains(cellValue)) {
-                headersIdxMap.put(cellValue, cell.getColumnIndex());
-                headerToAdd.remove(cellValue);
-            }
-        }
-        if (!headerToAdd.isEmpty()) {
-            throw new IllegalArgumentException("Cannot find required headers: " + headerToAdd);
-        }
+        Map<String, Integer> headersIdxMap = getHeaderToColIdxMap(headersTitles, sheet, headerRowY);
 
         for (int i = headerRowY + 1; i <= sheet.getLastRowNum(); i++) { // Start from the second row
             Row row = sheet.getRow(i);
             if (row == null) continue;
 
             Map<String, String> rowData = new HashMap<>();
-//            for (int j = 0; j < headers.size(); j++) {
-//                Cell cell = row.getCell(j);
-//                String cellValue = getCellValue(cell);
-//                rowData.put(headers.get(j), cellValue);
-//            }
 
             try {
                 for (String h : headersIdxMap.keySet()) {
@@ -55,6 +53,46 @@ public class ParserHelpers {
         }
 
         return rows;
+    }
+
+    private static Map<String, Integer> getHeaderToColIdxMap(Optional<List<String>> headersTitles, Sheet sheet, int headerRowY) {
+        if (headersTitles.isPresent()) {
+            return getHeaderToColIdxMap(headersTitles, sheet, headerRowY);
+        }
+        return getHeaderToColIdxMap(sheet, headerRowY);
+    }
+
+    private static Map<String, Integer> getHeaderToColIdxMap(Sheet sheet, int headerRowY) {
+        Row headerRow = sheet.getRow(headerRowY);
+        if (headerRow == null) {
+            throw new IllegalArgumentException("Sheet is empty or does not contain a header row.");
+        }
+        Map<String, Integer> headersIdxMap = new HashMap<>();
+        for (Cell cell : headerRow) {
+            String cellValue = getCellValue(cell);
+            headersIdxMap.put(cellValue, cell.getColumnIndex());
+        }
+        return headersIdxMap;
+    }
+
+    private static Map<String, Integer> getHeaderToColIdxMap(List<String> headersTitles, Sheet sheet, int headerRowY) {
+        Row headerRow = sheet.getRow(headerRowY);
+        if (headerRow == null) {
+            throw new IllegalArgumentException("Sheet is empty or does not contain a header row.");
+        }
+        Map<String, Integer> headersIdxMap = new HashMap<>();
+        Set<String> headerToAdd = new HashSet<>(headersTitles);
+        for (Cell cell : headerRow) {
+            String cellValue = getCellValue(cell);
+            if (headerToAdd.contains(cellValue)) {
+                headersIdxMap.put(cellValue, cell.getColumnIndex());
+                headerToAdd.remove(cellValue);
+            }
+        }
+        if (!headerToAdd.isEmpty()) {
+            throw new IllegalArgumentException("Cannot find required headers: " + headerToAdd);
+        }
+        return headersIdxMap;
     }
 
     private static String getCellValue(Cell cell) {
