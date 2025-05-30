@@ -4,7 +4,10 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.DateUtil;
 
+import java.text.DecimalFormat;
+
 public class XlsxParser {
+    private static final DecimalFormat df = new DecimalFormat("#.####################");
     public static String getCellValue(Cell cell) {
         if (cell == null) {
             return "";
@@ -16,7 +19,8 @@ public class XlsxParser {
                 if (DateUtil.isCellDateFormatted(cell)) {
                     return cell.getDateCellValue().toString();
                 } else {
-                    return String.valueOf(cell.getNumericCellValue());
+                    double value = cell.getNumericCellValue();
+                    return df.format(value);
                 }
             case BOOLEAN:
                 return String.valueOf(cell.getBooleanCellValue());

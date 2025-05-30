@@ -1,5 +1,6 @@
 package io.github.vkostin.xlss.parser;
 
+import io.github.vkostin.xlss.extractors.XlsxParser;
 import lombok.SneakyThrows;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -55,7 +56,7 @@ public class ParserHelpers {
                     if (idx == null)
                         throw new RuntimeException("Cannot parse file, required column doesnt exist");
                     Cell cell = row.getCell(idx);
-                    rowData.put(h, getCellValue(cell));
+                    rowData.put(h, XlsxParser.getCellValue(cell));
                 }
             } catch (Exception e) {
                 System.out.println(e.getMessage());
@@ -82,7 +83,7 @@ public class ParserHelpers {
         }
         Map<String, Integer> headersIdxMap = new HashMap<>();
         for (Cell cell : headerRow) {
-            String cellValue = getCellValue(cell);
+            String cellValue = XlsxParser.getCellValue(cell);
             headersIdxMap.put(cellValue, cell.getColumnIndex());
         }
         return headersIdxMap;
@@ -96,7 +97,7 @@ public class ParserHelpers {
         Map<String, Integer> headersIdxMap = new HashMap<>();
         Set<String> headerToAdd = new HashSet<>(headersTitles);
         for (Cell cell : headerRow) {
-            String cellValue = getCellValue(cell);
+            String cellValue = XlsxParser.getCellValue(cell);
             if (headerToAdd.contains(cellValue)) {
                 headersIdxMap.put(cellValue, cell.getColumnIndex());
                 headerToAdd.remove(cellValue);
@@ -108,34 +109,34 @@ public class ParserHelpers {
         return headersIdxMap;
     }
 
-    private static String getCellValue(Cell cell) {
-        if (cell == null) {
-            return "";
-        }
-        switch (cell.getCellType()) {
-            case STRING:
-                return cell.getStringCellValue();
-            case NUMERIC:
-                if (DateUtil.isCellDateFormatted(cell)) {
-                    return cell.getDateCellValue().toString();
-                } else {
-                    return String.valueOf(cell.getNumericCellValue());
-                }
-            case BOOLEAN:
-                return String.valueOf(cell.getBooleanCellValue());
-            case FORMULA:
-                // up to apache poi 5.1.0 a FormulaEvaluator is needed to evaluate the formulas while using DataFormatter
-//                FormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
-                DataFormatter dataFormatter = new DataFormatter(new java.util.Locale("en", "US"));
-                // from 5.2.0 on the DataFormatter can set to use cached values for formula cells
-                dataFormatter.setUseCachedValuesForFormulaCells(true);
-                //String value = dataFormatter.formatCellValue(cell, evaluator); // up to apache poi 5.1.0
-                //                return cell.getCellFormula();
-                return dataFormatter.formatCellValue(cell);
-            case BLANK:
-                return "";
-            default:
-                return "";
-        }
-    }
+//    private static String getCellValue(Cell cell) {
+//        if (cell == null) {
+//            return "";
+//        }
+//        switch (cell.getCellType()) {
+//            case STRING:
+//                return cell.getStringCellValue();
+//            case NUMERIC:
+//                if (DateUtil.isCellDateFormatted(cell)) {
+//                    return cell.getDateCellValue().toString();
+//                } else {
+//                    return String.valueOf(cell.getNumericCellValue());
+//                }
+//            case BOOLEAN:
+//                return String.valueOf(cell.getBooleanCellValue());
+//            case FORMULA:
+//                // up to apache poi 5.1.0 a FormulaEvaluator is needed to evaluate the formulas while using DataFormatter
+////                FormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
+//                DataFormatter dataFormatter = new DataFormatter(new java.util.Locale("en", "US"));
+//                // from 5.2.0 on the DataFormatter can set to use cached values for formula cells
+//                dataFormatter.setUseCachedValuesForFormulaCells(true);
+//                //String value = dataFormatter.formatCellValue(cell, evaluator); // up to apache poi 5.1.0
+//                //                return cell.getCellFormula();
+//                return dataFormatter.formatCellValue(cell);
+//            case BLANK:
+//                return "";
+//            default:
+//                return "";
+//        }
+//    }
 }
