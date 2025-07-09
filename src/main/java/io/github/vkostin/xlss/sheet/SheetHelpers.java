@@ -9,6 +9,8 @@ import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Function;
 
 import static io.github.vkostin.xlss.styles.StylesHelper.setBgColor;
@@ -43,5 +45,16 @@ public final class SheetHelpers {
             setBgColor(defaultStyle, DefaultColors.white(), indexedColorMap);
             return defaultStyle;
         };
+    }
+
+    public static List<Sheet> getNotHiddenSheets(XSSFWorkbook workbook) {
+        List<Sheet> visibleSheets = new ArrayList<>();
+        int numSheets = workbook.getNumberOfSheets();
+        for (int i = 0; i < numSheets; i++) {
+            if (!workbook.isSheetHidden(i) && !workbook.isSheetVeryHidden(i)) {
+                visibleSheets.add(workbook.getSheetAt(i));
+            }
+        }
+        return visibleSheets;
     }
 }
