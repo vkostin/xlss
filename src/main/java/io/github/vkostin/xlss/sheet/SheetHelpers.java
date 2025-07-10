@@ -1,13 +1,8 @@
 package io.github.vkostin.xlss.sheet;
 
 import io.github.vkostin.xlss.styles.DefaultColors;
-import org.apache.poi.ss.usermodel.HorizontalAlignment;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.VerticalAlignment;
-import org.apache.poi.xssf.usermodel.DefaultIndexedColorMap;
-import org.apache.poi.xssf.usermodel.XSSFCellStyle;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +24,14 @@ public final class SheetHelpers {
                 cTCol.setStyle(defaultStyle.getIndex());
             }
         }
+    }
+
+    public static Cell getOrCreateCell(XSSFRow destRow, int colIdx) {
+        Cell cell = destRow.getCell(colIdx);
+        if (cell == null) {
+            cell = destRow.createCell(colIdx);
+        }
+        return cell;
     }
 
     public record DefaultStyleRendererParams(XSSFWorkbook workbook, Sheet sheet) {
@@ -56,5 +59,12 @@ public final class SheetHelpers {
             }
         }
         return visibleSheets;
+    }
+
+    public static XSSFRow createRowIfNotExist(XSSFSheet sheet, int rowIdx) {
+        if (sheet.getRow(rowIdx) == null) {
+            sheet.createRow(rowIdx);
+        }
+        return sheet.getRow(rowIdx);
     }
 }

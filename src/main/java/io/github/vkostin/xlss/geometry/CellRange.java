@@ -1,11 +1,19 @@
 package io.github.vkostin.xlss.geometry;
 
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
 
 import java.util.Objects;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
+@Data
 @Getter
-public class CellRange {
+public class CellRange implements Comparable<CellRange> {
     final CellPosition topLeft;
     final CellPosition bottomRight;
     final int height;
@@ -32,6 +40,15 @@ public class CellRange {
         if (this.height < 0 || this.width < 0) {
             throw new IllegalArgumentException("Invalid cell range : " + topLeft + "-" + bottomRight);
         }
+    }
+
+    public CellRange(int firstColumn, int lastColumn, int firstRow, int lastRow) {
+        this(new CellPosition(firstColumn, firstRow), lastColumn - firstColumn, lastRow - firstRow);
+    }
+
+    public static CellRange of(CellRangeAddress address) {
+        return new CellRange(address.getFirstColumn(), address.getLastColumn(),
+                             address.getFirstRow(), address.getLastRow());
     }
 
     public CellRange atTopLeft(CellPosition anchor) {
@@ -79,5 +96,41 @@ public class CellRange {
             return "null";
         }
         return topLeft.toExcelString() + ":" + bottomRight.toExcelString();
+    }
+
+    public Stream<XSSFRow> nonNullRowsStream(XSSFSheet sourceSheet) {
+        return IntStream.range(topLeft.getY(), bottomRight.getY() + 1)
+                .mapToObj(sourceSheet::getRow)
+                .filter(Objects::nonNull);
+    }
+
+    @Override
+    public int compareTo(CellRange o) {
+        CellPosition topLeft = this.getTopLeft();
+        CellPosition oTopLeft = o.getTopLeft();
+        if (topLeft.getY() < oTopLeft.getY()) {
+            return -1;
+        }
+        if (topLeft.getY() > oTopLeft.getY()) {
+            return 1;
+        }
+        if (topLeft.getX() < oTopLeft.getX()) {
+            return -1;
+        }
+        if (topLeft.getX() > oTopLeft.getX()) {
+            return 1;
+        }
+        // topLeft == oTopLeft
+        if (this.getHeight() < o.getHeight()) {
+            return -1;
+        }
+        if (this.getHeight() > o.getHeight()) {
+            return 1;
+        }
+        return Integer.compare(this.getWidth(), o.getWidth());
+    }
+
+    public CellRangeAddress asExcelRangeAddressObj() {
+        return new CellRangeAddress(topLeft.getY(), bottomRight.getY(), topLeft.getX(), bottomRight.getX());
     }
 }

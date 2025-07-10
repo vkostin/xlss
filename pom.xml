@@ -7,7 +7,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.github.vkostin</groupId>
     <artifactId>xlss</artifactId>
-    <version>0.1.20</version>
+    <version>0.1.21</version>
     <name>${project.groupId}:${project.artifactId}</name>
     <description>Java library for creation of beautiful Excel files</description>
     <url>https://github.com/vkostin/xlss</url>
