@@ -18,7 +18,18 @@ public class Delta {
     public int applyToSourceY(int rowNum) {
         return rowNum + deltaY;
     }
+
     public int applyToSourceX(int colNum) {
         return colNum + deltaX;
+    }
+
+    @Override
+    public String toString() {
+        return "Delta{" +
+               "deltaX=" + deltaX +
+               ", deltaY=" + deltaY +
+               ", initialFrom=" + initialFrom +
+               ", initialTo=" + initialTo +
+               '}';
     }
 }

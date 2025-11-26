@@ -6,6 +6,7 @@ import io.github.vkostin.xlss.geometry.Delta;
 import io.github.vkostin.xlss.sheet.SheetHelpers;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.util.CellRangeAddress;
@@ -14,6 +15,7 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.logging.Logger;
 
 import static io.github.vkostin.xlss.sheet.SheetHelpers.createRowIfNotExist;
 
@@ -23,7 +25,9 @@ class BlockBetweenDifferentSheetsCopier {
     private final XSSFSheet sourceSheet;
     private final CellPosition target;
     private final XSSFSheet destSheet;
+    private final boolean tolerateExceptions;
 
+    private final Logger logger = Logger.getLogger(BlockBetweenDifferentSheetsCopier.class.getName());
     private final Set<CellRange> usedMergedRegions = new TreeSet<>();
 
     public void copyData() {
@@ -45,8 +49,7 @@ class BlockBetweenDifferentSheetsCopier {
             int destX = delta.applyToSourceX(i);
             destSheet.setColumnWidth(destX, sourceSheet.getColumnWidth(i));
             CellStyle srcColStyle = sourceSheet.getColumnStyle(i);
-            if (srcColStyle != null)
-            {
+            if (srcColStyle != null) {
                 destSheet.setDefaultColumnStyle(destX, srcColStyle);
             }
         }
@@ -77,18 +80,53 @@ class BlockBetweenDifferentSheetsCopier {
         }
     }
 
+    // TODO:fix formulas
     private void copyMergedRegion(XSSFRow sourceRow, Cell sourceCell, Delta delta) {
-        CellRangeAddress mergedRegion = getMergedRegion(sourceSheet, sourceRow.getRowNum(),
-                (short) sourceCell.getColumnIndex());
+        CellRangeAddress mergedRegion = getMergedRegion(
+                sourceSheet,
+                sourceRow.getRowNum(),
+                (short) sourceCell.getColumnIndex()
+        );
 
         if (mergedRegion != null) {
-            CellRangeAddress destMergedRegion = new CellRangeAddress(mergedRegion.getFirstRow(),
-                    mergedRegion.getLastRow(), mergedRegion.getFirstColumn(), mergedRegion.getLastColumn());
+            System.out.println("Merged region: " + mergedRegion);
+            System.out.println(mergedRegion.getFirstRow() + ":" +
+                               mergedRegion.getLastRow() + ":" +
+                               mergedRegion.getFirstColumn() + ":" +
+                               mergedRegion.getLastColumn()
+            );
+            System.out.println(delta);
+            System.out.println(delta.applyToSourceY(mergedRegion.getFirstRow()) + ":" +
+                               delta.applyToSourceY(mergedRegion.getLastRow()) + ":" +
+                               delta.applyToSourceX(mergedRegion.getFirstColumn()) + ":" +
+                               delta.applyToSourceX(mergedRegion.getLastColumn())
+            );
 
-            CellRange range = CellRange.of(destMergedRegion);
-            if (!usedMergedRegions.contains(range)) {
-                usedMergedRegions.add(range);
-                destSheet.addMergedRegion(range.asExcelRangeAddressObj());
+            CellRangeAddress destMergedRegion = new CellRangeAddress(
+                    delta.applyToSourceY(mergedRegion.getFirstRow()),
+                    delta.applyToSourceY(mergedRegion.getLastRow()),
+                    delta.applyToSourceX(mergedRegion.getFirstColumn()),
+                    delta.applyToSourceX(mergedRegion.getLastColumn())
+            );
+            if (
+                    delta.applyToSourceY(mergedRegion.getFirstRow()) > 0 &&
+                    delta.applyToSourceY(mergedRegion.getLastRow()) > 0 &&
+                    delta.applyToSourceX(mergedRegion.getFirstColumn()) > 0 &&
+                    delta.applyToSourceX(mergedRegion.getLastColumn()) > 0
+            ) {
+                System.out.println("destMergedRegion: " + destMergedRegion);
+
+                CellRange range = CellRange.of(destMergedRegion);
+                if (!usedMergedRegions.contains(range)) {
+                    usedMergedRegions.add(range);
+                    try {
+                        destSheet.addMergedRegion(range.asExcelRangeAddressObj());
+                    } catch (Exception e) {
+                        if (!tolerateExceptions) {
+                            throw e;
+                        }
+                    }
+                }
             }
         }
     }

@@ -28,6 +28,16 @@ public class WorkbookTransformer {
             CellPosition target,
             XSSFSheet targetSheet
     ) {
-        new BlockBetweenDifferentSheetsCopier(source, sourceSheet, target, targetSheet).copyData();
+        new BlockBetweenDifferentSheetsCopier(source, sourceSheet, target, targetSheet, false).copyData();
     }
+
+    public static void copyBlockInSameWorkbookTolerantly(
+            CellRange source,
+            XSSFSheet sourceSheet,
+            CellPosition target,
+            XSSFSheet targetSheet
+    ) {
+        new BlockBetweenDifferentSheetsCopier(source, sourceSheet, target, targetSheet, true).copyData();
+    }
+
 }
